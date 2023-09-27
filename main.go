@@ -3,19 +3,62 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-
 	"math/big"
+	"os"
 )
 
 var infraEtheriumURL = "https://mainnet.infura.io/v3/5d4822d03f3940748e09a54592655fd5"
 
 func main() {
-	cryptoF()
-	go getBalance()
+	//cryptoF()
+	//go getBalance()
+	if err := readKeyStore(); err != nil {
+		fmt.Printf("err readKeyStore", err)
+		return
+	}
+}
+
+const (
+	keyDir         = "./wallet"
+	password       = "skr123"
+	pathToKeyStore = "./wallet/kystore"
+)
+
+func readKeyStore() error {
+	data, err := os.ReadFile(pathToKeyStore)
+	if err != nil {
+		return err
+	}
+	//fmt.Printf("file content%+v \n", string(data))
+	//keystore.EncryptKey()
+	decryptedKey, err := keystore.DecryptKey(data, password)
+	if err != nil {
+		return err
+	}
+
+	pData := crypto.FromECDSA(decryptedKey.PrivateKey)
+	fmt.Printf("decrypted from File, privateKey %+v \n", hexutil.Encode(pData))
+	pubData := crypto.FromECDSAPub(&decryptedKey.PrivateKey.PublicKey)
+	fmt.Printf("decrypted from File, privateKey %+v \n", hexutil.Encode(pData))
+	fmt.Printf("decrypted from File, publicKey %+v \n", hexutil.Encode(pubData))
+
+	return nil
+}
+
+func createKeyStore() error {
+	key := keystore.NewKeyStore(keyDir, keystore.StandardScryptN, keystore.StandardScryptP)
+	account, err := key.NewAccount(password)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("account %+v", account)
+
+	return nil
 }
 
 func cryptoF() {
@@ -29,6 +72,7 @@ func cryptoF() {
 	fmt.Println("privatKey generated", pKeyStr)
 
 	public := crypto.FromECDSAPub(&pKey.PublicKey)
+
 	fmt.Println("publicKey generated", hexutil.Encode(public))
 
 	//crypto.PubkeyToAddress(pKey.PublicKey).Hex() //return public-like Address

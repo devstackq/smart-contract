@@ -17,8 +17,8 @@ var infraEtheriumURL = "https://mainnet.infura.io/v3/5d4822d03f3940748e09a545926
 func main() {
 	//cryptoF()
 	//go getBalance()
-	if err := readKeyStore(); err != nil {
-		fmt.Printf("err readKeyStore", err)
+	if err := getFreeEther(); err != nil {
+		fmt.Printf("err getFreeEther", err)
 		return
 	}
 }
@@ -27,7 +27,30 @@ const (
 	keyDir         = "./wallet"
 	password       = "skr123"
 	pathToKeyStore = "./wallet/kystore"
+	polygonURL     = "https://polygon-mainnet.infura.io/v3/5d4822d03f3940748e09a54592655fd5"
+	address        = "3d533ee41b976dc626d381f8932f4bcf9bd3f3c1"
 )
+
+func getFreeEther() error {
+	//1 account - make transaction many network; 1 network - have own;
+	//ex: Eth -> goerli - address23 = balance 2.4; Mainnet = address23 = 45.1
+	ctx := context.Background()
+
+	cl, err := ethclient.DialContext(ctx, polygonURL)
+	if err != nil {
+		return err
+	}
+	defer cl.Close()
+	address1 := common.HexToAddress(address)
+
+	balance, err := cl.BalanceAt(ctx, address1, nil)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("balance %+v \n", balance)
+
+	return nil
+}
 
 func readKeyStore() error {
 	data, err := os.ReadFile(pathToKeyStore)

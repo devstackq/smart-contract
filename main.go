@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"math/big"
@@ -31,9 +32,16 @@ const (
 	address        = "3d533ee41b976dc626d381f8932f4bcf9bd3f3c1"
 )
 
+func transferCoin() error {
+	//Miner have percent - each transaction
+	return nil
+}
+
 func getFreeEther() error {
-	//1 account - make transaction many network; 1 network - have own;
+	//1.account - make transaction many network; 1 network - have own;
 	//ex: Eth -> goerli - address23 = balance 2.4; Mainnet = address23 = 45.1
+	//2.Miner have percent - each transaction
+
 	ctx := context.Background()
 
 	cl, err := ethclient.DialContext(ctx, polygonURL)
@@ -49,6 +57,34 @@ func getFreeEther() error {
 	}
 	fmt.Printf("balance %+v \n", balance)
 
+	nonce, err := cl.PendingNonceAt(ctx, address1)
+	if err != nil {
+		return err
+	}
+	gasPrice, err := cl.SuggestGasPrice(ctx)
+	if err != nil {
+		return err
+	}
+	amount := big.NewInt(1000000000000000000)
+	trx := types.NewTransaction(nonce, address1, amount, 21000, gasPrice, nil)
+	//todo: address2; balance - add
+	chaindID, err := cl.NetworkID(ctx)
+	data, err := os.ReadFile(pathToKeyStore)
+	if err != nil {
+		return err
+	}
+	k, err := keystore.DecryptKey(data, password)
+	if err != nil {
+		return err
+	}
+	t, err := types.SignTx(trx, types.NewEIP155Signer(chaindID), k.PrivateKey)
+	if err != nil {
+		return err
+	}
+	if err = cl.SendTransaction(ctx, t); err != nil {
+		return err
+	}
+	fmt.Println("trans v", t.Hash().Hex())
 	return nil
 }
 

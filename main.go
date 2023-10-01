@@ -27,7 +27,7 @@ func main() {
 const (
 	keyDir         = "./wallet"
 	password       = "skr123"
-	pathToKeyStore = "./wallet/kystore"
+	pathToKeyStore = "./wallet/keystore"
 	polygonURL     = "https://polygon-mainnet.infura.io/v3/5d4822d03f3940748e09a54592655fd5"
 	address        = "3d533ee41b976dc626d381f8932f4bcf9bd3f3c1"
 )

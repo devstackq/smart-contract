@@ -5,6 +5,7 @@ import (
 	"fmt"
 	todo "github.com/devstackq/smart-contract/gen"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -40,7 +41,8 @@ func main() {
 		return
 	}
 	defer cl.Close()
-
+	//pKey := "7bd50df4554e459af04e94576fc0e4b7d21a16b96abb857baa322f1b97f64ea0"
+	//pubKey := "0x72b08e6514399239348978D1c101d71A154945A3"
 	//get address by pubKey
 	addr := crypto.PubkeyToAddress(key.PrivateKey.PublicKey)
 
@@ -70,16 +72,47 @@ func main() {
 		return
 	}
 	//prepare trans
-	trnOpts.GasPrice = gasPrice
+	trnOpts.GasPrice = gasPrice //verification Fee, eth equaivilanet
 	trnOpts.Nonce = big.NewInt(int64(nonce))
 	trnOpts.GasLimit = uint64(300000)
+	trnOpts.Value = big.NewInt(1) //send 1 eth - send 1eth contract;
 
 	// DeployTodo deploys a new Ethereum contract
-	resp, tx, _, err := todo.DeployTodo(trnOpts, cl)
+	//resp, tx, _, err := todo.DeployTodo(trnOpts, cl)
+	//if err != nil {
+	//	fmt.Printf("err DeployTodo %v ", err)
+	//	return
+	//}
+	//fmt.Printf(" resp %+v tx %+v ", resp, tx)
+	// do insufficient funds for gas * price + value ; ->  not enough Balance
+
+	//next step - get created Contract address
+	contractAddress := common.HexToAddress("0x48B63160d3Bbc7B566aa596768a19523278C1525")
+
+	solidInterface, err := todo.NewTodo(contractAddress, cl)
 	if err != nil {
-		fmt.Printf("err DeployTodo %v ", err)
+		fmt.Printf("err NewTodo %v ", err)
 		return
 	}
-	fmt.Printf(" resp %v tx %v ", resp, tx)
 
+	//Caller -> layer -> abigen -> golang -> solidity bin -> eth network
+
+	//call method - solc - generated abigen - solidity methods
+	//work with 1 client, 1 contract - any methods
+	trx, err := solidInterface.Add(trnOpts, "hello world !", "bekhzna")
+	if err != nil {
+		fmt.Printf("err solidInterface Add %v ", err)
+		return
+	}
+
+	tasks, err := solidInterface.List(&bind.CallOpts{
+		From: addr,
+	})
+	if err != nil {
+		fmt.Printf("err solidInterface List %v ", err)
+		return
+	}
+	fmt.Printf("trx Add() %+v list %+v ", trx, tasks)
+
+	//solidInterface.TodoTransactor.Update()
 }
